@@ -34,7 +34,7 @@ async def receive_message(request: Request):
                     try:
                         response = gemini_client.models.generate_content(
                             model="gemini-3.6-flash",
-                            contents=f"Eres el asistente virtual de la página de películas MovieSpay. Responde de forma amable, breve y en español. Si el usuario pregunta cómo descargar la aplicación o ver películas, responde SIEMPRE con este enlace: https://play.google.com/store/search?q=spaynext . El usuario dice: {user_text}"
+                            contents=f"Eres el asistente virtual de la página de películas MovieSpay. Responde de forma amable, breve y en español. Si el usuario pregunta cómo descargar la aplicación o ver películas, responde SIEMPRE con este enlace: https://play.google.com/store/apps/details?id=com.companyname.spay&hl=es_BO . El usuario dice: {user_text}"
                         )
                         bot_reply = response.text
                     except Exception as e:
@@ -63,11 +63,11 @@ def publicar_en_muro(mensaje):
 # --- TAREA DIARIA AUTOMÁTICA CON REINTENTOS ---
 def tarea_diaria():
     print("Ejecutando tarea diaria de estrenos...")
-    prompt = """
+    prompt = f"""
     Eres el community manager de MovieSpay. Escribe un post corto, emocionante y con emojis de cine 
     recomendando los estrenos de la semana. 
     Al final del texto, SIEMPRE debes incluir este enlace para descargar nuestra App SpayNext: 
-    '📲 Descarga nuestra App SpayNext aquí: https://play.google.com/store/apps/details?id=com.spaynext.app'
+    '📲 Descarga nuestra App SpayNext aquí: https://play.google.com/store/apps/details?id=com.companyname.spay&hl=es_BO'
     No uses comillas en tu respuesta, solo el texto del post.
     """
     
@@ -80,16 +80,16 @@ def tarea_diaria():
             )
             texto_post = response.text
             publicar_en_muro(texto_post)
-            return  # Si tiene éxito, sale de la función y no hace más reintentos
+            return
         except Exception as e:
             if intento < max_intentos - 1:
-                espera = 2 ** intento  # 1s, 2s, 4s, 8s...
+                espera = 2 ** intento
                 print(f"Intento {intento + 1} falló (probablemente 503). Reintentando en {espera} segundos...")
                 time.sleep(espera)
             else:
                 print(f"Error generando el post diario tras {max_intentos} intentos: {e}")
 
-# --- RUTA PARA FORZAR PUBLICACIÓN MANUAL (Solo para probar) ---
+# --- RUTA PARA FORZAR PUBLICACIÓN MANUAL ---
 @app.get("/forzar-post")
 def forzar_post():
     print("Forzando publicación manual desde el navegador...")
@@ -98,7 +98,6 @@ def forzar_post():
 
 # --- CONFIGURAR EL PROGRAMADOR (Scheduler) ---
 scheduler = BackgroundScheduler()
-# Programa la tarea todos los días a las 10:00 AM (hora del servidor)
 scheduler.add_job(tarea_diaria, 'cron', hour=10, minute=0) 
 scheduler.start()
 
