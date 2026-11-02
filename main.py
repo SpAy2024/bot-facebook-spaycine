@@ -20,6 +20,7 @@ async def verify(request: Request):
     return Response(content="Error de verificación", status_code=403)
 
 # 2. Recibir mensajes y responder con Gemini
+
 @app.post("/webhook")
 async def receive_message(request: Request):
     data = await request.json()
@@ -31,18 +32,30 @@ async def receive_message(request: Request):
                     sender_id = messaging_event["sender"]["id"]
                     user_text = messaging_event["message"]["text"]
                     
-                    try:
-                        response = gemini_client.models.generate_content(
-                            model="gemini-3.6-flash",
-                            contents=f"Eres el asistente virtual de la página de películas MovieSpay. Responde de forma amable, breve y en español. Si el usuario pregunta cómo descargar la aplicación o ver películas, responde SIEMPRE con este enlace: https://play.google.com/store/apps/details?id=com.companyname.spay&hl=es_BO . El usuario dice: {user_text}"
-                        )
-                        bot_reply = response.text
-                    except Exception as e:
-                        print(f"Error con Gemini: {e}")
-                        bot_reply = "Lo siento, estoy teniendo problemas para pensar. Intenta de nuevo más tarde."
+                    bot_reply = "Lo siento, estoy teniendo problemas para pensar. Intenta de nuevo más tarde."
+                    max_intentos = 3
+                    
+                    for intento in range(max_intentos):
+                        try:
+                            response = gemini_client.models.generate_content(
+                                model="gemini-3.6-flash",
+                                contents=f"Eres el asistente virtual de la página de películas MovieSpay. Responde de forma amable, breve y en español. Si el usuario pregunta cómo descargar la aplicación o ver películas, responde SIEMPRE con este enlace: https://play.google.com/store/apps/details?id=com.companyname.spay&hl=es_BO . El usuario dice: {user_text}"
+                            )
+                            bot_reply = response.text
+                            break # Si funciona, sale del bucle y responde
+                        except Exception as e:
+                            print(f"Error con Gemini en intento {intento + 1}: {e}")
+                            if intento < max_intentos - 1:
+                                time.sleep(2) # Espera 2 segundos antes de reintentar
                     
                     send_message(sender_id, bot_reply)
     return Response(content="OK", status_code=200)
+
+
+
+
+
+
 
 # Función para enviar el mensaje
 def send_message(recipient_id, text):
