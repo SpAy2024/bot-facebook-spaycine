@@ -1,5 +1,6 @@
 import os
 import requests
+import time
 from fastapi import FastAPI, Request, Response
 from dotenv import load_dotenv
 from google import genai
@@ -32,7 +33,7 @@ async def receive_message(request: Request):
                     
                     try:
                         response = gemini_client.models.generate_content(
-                            model="gemini-3.8-flash",
+                            model="gemini-3.6-flash",
                             contents=f"Eres el asistente virtual de la página de películas MovieSpay. Responde de forma amable, breve y en español. Si el usuario pregunta cómo descargar la aplicación o ver películas, responde SIEMPRE con este enlace: https://play.google.com/store/search?q=spaynext . El usuario dice: {user_text}"
                         )
                         bot_reply = response.text
@@ -59,7 +60,7 @@ def publicar_en_muro(mensaje):
     response = requests.post(url, json=payload)
     print(f"Publicación enviada. Código de respuesta: {response.status_code} - Detalle: {response.text}")
 
-# --- TAREA DIARIA AUTOMÁTICA ---
+# --- TAREA DIARIA AUTOMÁTICA CON REINTENTOS ---
 def tarea_diaria():
     print("Ejecutando tarea diaria de estrenos...")
     prompt = """
@@ -69,15 +70,24 @@ def tarea_diaria():
     '📲 Descarga nuestra App SpayNext aquí: https://play.google.com/store/apps/details?id=com.spaynext.app'
     No uses comillas en tu respuesta, solo el texto del post.
     """
-    try:
-        response = gemini_client.models.generate_content(
-            model="gemini-3.6-flash",
-            contents=prompt
-        )
-        texto_post = response.text
-        publicar_en_muro(texto_post)
-    except Exception as e:
-        print(f"Error generando el post diario: {e}")
+    
+    max_intentos = 5
+    for intento in range(max_intentos):
+        try:
+            response = gemini_client.models.generate_content(
+                model="gemini-3.6-flash",
+                contents=prompt
+            )
+            texto_post = response.text
+            publicar_en_muro(texto_post)
+            return  # Si tiene éxito, sale de la función y no hace más reintentos
+        except Exception as e:
+            if intento < max_intentos - 1:
+                espera = 2 ** intento  # 1s, 2s, 4s, 8s...
+                print(f"Intento {intento + 1} falló (probablemente 503). Reintentando en {espera} segundos...")
+                time.sleep(espera)
+            else:
+                print(f"Error generando el post diario tras {max_intentos} intentos: {e}")
 
 # --- RUTA PARA FORZAR PUBLICACIÓN MANUAL (Solo para probar) ---
 @app.get("/forzar-post")
