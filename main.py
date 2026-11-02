@@ -91,9 +91,8 @@ def tarea_diaria():
 # Esto iniciará un reloj en segundo plano cuando arranque el servidor
 scheduler = BackgroundScheduler()
 # Programa la tarea todos los días a las 10:00 AM (hora del servidor)
-scheduler.add_job(tarea_diaria, 'cron', hour=10, minute=0) 
-scheduler.start()
-
+# Ejecutar la tarea una vez al arrancar (para probar)
+tarea_diaria()
 
 if __name__ == "__main__":
     import uvicorn
