@@ -1,5 +1,10 @@
 # 🤖 Bot de Facebook con IA para MovieSpay
 
+![Python](https://img.shields.io/badge/Python-3.12-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-009688?style=for-the-badge&logo=fastapi&logoColor=white)
+![Gemini](https://img.shields.io/badge/Google%20Gemini-3.8%20Flash-8E75B2?style=for-the-badge&logo=google&logoColor=white)
+![Licencia](https://img.shields.io/badge/Licencia-MIT-yellow?style=for-the-badge)
+
 Este proyecto es un bot de atención al cliente y recomendaciones de películas para la página de Facebook **MovieSpay**. Utiliza la API oficial de Meta para recibir mensajes y la inteligencia artificial de **Google Gemini** para generar respuestas naturales y contextuales.
 
 ## ✨ Características
