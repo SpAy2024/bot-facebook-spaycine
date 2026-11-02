@@ -4,6 +4,11 @@ from fastapi import FastAPI, Request, Response
 from dotenv import load_dotenv
 from google import genai
 
+import time
+import threading
+import datetime
+from apscheduler.schedulers.background import BackgroundScheduler
+
 load_dotenv()
 
 app = FastAPI()
@@ -33,7 +38,7 @@ async def receive_message(request: Request):
                         # Usamos el modelo actualizado que te indicó Google
                         response = gemini_client.models.generate_content(
                             model="gemini-3.6-flash",
-                            contents=f"Eres el asistente virtual de la página de películas MovieSpay. Responde de forma amable, breve y en español. El usuario dice: {user_text}"
+                            contents=f"Eres el asistente virtual de la página de películas MovieSpay. Responde de forma amable, breve y en español. Si el usuario pregunta cómo descargar la aplicación o ver películas, responde SIEMPRE con este enlace: https://play.google.com/store/search?q=spaynext . El usuario dice: {user_text}"
                         )
                         bot_reply = response.text
                     except Exception as e:
@@ -51,6 +56,44 @@ def send_message(recipient_id, text):
         "message": {"text": text}
     }
     requests.post(url, json=payload)
+
+# --- NUEVA FUNCIÓN PARA PUBLICAR EN EL MURO ---
+def publicar_en_muro(mensaje):
+    url = f"https://graph.facebook.com/v18.0/me/feed?access_token={os.getenv('PAGE_ACCESS_TOKEN')}"
+    payload = {"message": mensaje}
+    response = requests.post(url, json=payload)
+    print(f"Publicación enviada: {response.status_code}")
+
+# --- TAREA DIARIA AUTOMÁTICA ---
+def tarea_diaria():
+    print("Ejecutando tarea diaria de estrenos...")
+    
+    # 1. Le pedimos a Gemini que invente el post del día
+    prompt = """
+    Eres el community manager de MovieSpay. Escribe un post corto, emocionante y con emojis de cine 
+    recomendando los estrenos de la semana. 
+    Al final del texto, SIEMPRE debes incluir este enlace para descargar nuestra App SpayNext: 
+    '📲 Descarga nuestra App SpayNext aquí: https://play.google.com/store/apps/details?id=com.spaynext.app'
+    No uses comillas en tu respuesta, solo el texto del post.
+    """
+    
+    try:
+        response = gemini_client.models.generate_content(
+            model="gemini-3.8-flash",
+            contents=prompt
+        )
+        texto_post = response.text
+        publicar_en_muro(texto_post)
+    except Exception as e:
+        print(f"Error generando el post diario: {e}")
+
+# --- CONFIGURAR EL PROGRAMADOR (Scheduler) ---
+# Esto iniciará un reloj en segundo plano cuando arranque el servidor
+scheduler = BackgroundScheduler()
+# Programa la tarea todos los días a las 10:00 AM (hora del servidor)
+scheduler.add_job(tarea_diaria, 'cron', hour=10, minute=0) 
+scheduler.start()
+
 
 if __name__ == "__main__":
     import uvicorn
