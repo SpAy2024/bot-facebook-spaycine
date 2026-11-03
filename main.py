@@ -177,7 +177,7 @@ def tarea_diaria():
     for intento in range(max_intentos):
         try:
             response = gemini_client.models.generate_content(
-                model="gemini-3.6-flash",
+                model="gemini-3.5-flash-lite",
                 contents=prompt
             )
             texto_post = response.text
