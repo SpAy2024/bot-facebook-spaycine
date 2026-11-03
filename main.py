@@ -118,7 +118,7 @@ async def receive_message(request: Request):
                     """
                     try:
                         analisis = gemini_client.models.generate_content(
-                            model="gemini-3.6-flash",
+                            model="3.5-flash-lite",
                             contents=prompt_analisis
                         ).text.strip()
                     except:
@@ -144,7 +144,7 @@ async def receive_message(request: Request):
                     for intento in range(max_intentos):
                         try:
                             response = gemini_client.models.generate_content(
-                                model="gemini-3.6-flash",
+                                model="3.5-flash-lite",
                                 contents=f"Eres el asistente virtual de MovieSpay. Responde breve y amable. Enlace App: https://play.google.com/store/apps/details?id=com.companyname.spay&hl=es_BO . Usuario: {user_text}"
                             )
                             bot_reply = response.text
